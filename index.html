@@ -30,6 +30,7 @@ var game = new Phaser.Game(1024, 768, Phaser.AUTO, '', { preload: preload, creat
       clickMode: 0,
       mainTitle: null,
       round: 1,
+      stalkers: [],
 
       addSprite: function (name, x, y) {
         var sprite = game.add.sprite(x * this.tileSize, y * this.tileSize, name);
@@ -49,7 +50,8 @@ var game = new Phaser.Game(1024, 768, Phaser.AUTO, '', { preload: preload, creat
             sprite = null,
             prince = null,
             offset = 14,
-            dead = false;
+            dead = false,
+            stalkerUpdate = false;
 
         return {
           start: function () {
@@ -66,13 +68,25 @@ var game = new Phaser.Game(1024, 768, Phaser.AUTO, '', { preload: preload, creat
             game.world.bringToTop(sprite);
           },
 
+          clear: function () {
+            x = -10;
+            y = -10;
+
+            sprite.x = monster.position(x);
+            sprite.y = monster.position(y) - offset;
+            prince.x = monster.position(x);
+            prince.y = monster.position(10) - offset;
+          },
+
           update: function () {
             if (monster.active) {
               if (!forward && y == 3) {
                 monster.mainTitle.text = "Princess defeated you!";
+                monster.roundTitle.text = 'Game Over!';
                 game.world.bringToTop(monster.mainTitle);
                 monster.active = false;
                 monster.round = 1;
+                monster.clickMode = 3;
               } else {
                 if (Math.random() >= 0.40) {
                   if (forward) {
@@ -92,6 +106,40 @@ var game = new Phaser.Game(1024, 768, Phaser.AUTO, '', { preload: preload, creat
                   }
                 }
 
+                if (stalkerUpdate) {
+                  (function () {
+                    if (stalkerUpdate) {
+                      for (var i = 0; i < monster.stalkers.length; i++) {
+                        var moves = [];
+
+                        var theStalker = monster.stalkers[i];
+                        for (var xx = -1; xx <= 1; xx++) {
+                          for (var yy = -1; yy <= 1; yy++) {
+                            var iX = theStalker.xx + xx;
+                            var iY = theStalker.yy + yy;
+
+                            if (iX >= 0 && iY >= 0 && iX < 10 && iY < 6 && monster.state[iY][iX] == 0) {
+                              moves.push({x: iX, y: iY});
+                            }
+                          }
+                        }
+
+                        if (moves.length) {
+                          var theMove = moves[parseInt(Math.random() * moves.length, 10)];
+                          monster.state[theStalker.yy][theStalker.xx] = 0;
+                          theStalker.xx = theMove.x;
+                          theStalker.yy = theMove.y;
+                          theStalker.x = monster.position(theStalker.xx + 1);
+                          theStalker.y = monster.position(theStalker.yy + 4);
+                          monster.state[theMove.y][theMove.x] = theStalker;
+                        }
+                      }
+                    }
+                  })();
+                }
+
+                stalkerUpdate = !stalkerUpdate;
+
                 sprite.x = monster.position(x);
                 sprite.y = monster.position(y) - offset;
 
@@ -104,11 +152,13 @@ var game = new Phaser.Game(1024, 768, Phaser.AUTO, '', { preload: preload, creat
                     positionY = y - 4;
 
                 if (positionX >= 0 && positionY >= 0 && positionX < monster.state[0].length && positionY < monster.state.length) {
-                  if (typeof(monster.state[positionY][positionX]) === 'object' && monster.state[positionY][positionX].key === 'hole_monster') {
+                  if (typeof(monster.state[positionY][positionX]) === 'object') {
                     monster.round += 1;
                     game.world.bringToTop(monster.mainTitle);
-                    monster.mainTitle.text = "Nice! Round " + monster.round;
+                    monster.mainTitle.text = 'Nice!';
+                    monster.roundTitle.text = 'Round: ' + monster.round;
                     monster.active = false;
+                    monster.clickMode = 4;
                   }
                 }
               }
@@ -201,7 +251,9 @@ function create() {
   }
 
   monster.mainTitle = game.add.bitmapText(monster.position(1.8), monster.position(4.5), 'font_win', '', 48);
-  game.add.bitmapText(monster.position(13) + 11, monster.position(1) + (monster.tileSize / 2) - 4, 'font', 'Start', 16);
+
+  game.add.bitmapText(monster.position(13), monster.position(1) + (monster.tileSize / 2) - 4, 'font', 'Start', 16);
+  monster.roundTitle = game.add.bitmapText(monster.position(5), monster.position(11) + (monster.tileSize / 2) - 4, 'font', 'Round: 1', 16);
 
 
   monster.addSprite('hole_monster', 12, 8);
@@ -279,8 +331,49 @@ function create() {
 
       case 2:
         if (clickX >= 1 && clickX <= 10 && clickY >= 4 && clickY <= 9) {
+          var positionX = clickX - 1,
+              positionY = clickY - 4;
 
+          if (monster.state[positionY][positionX] == 0) {
+            monster.state[positionY][positionX] = monster.addSprite('stalker_monster', clickX, clickY);
+            monster.state[positionY][positionX].xx = positionX;
+            monster.state[positionY][positionX].yy = positionY;
+            monster.stalkers.push(monster.state[positionY][positionX]);
+            monster.clickMode = 0;
+            monster.cursor_stalker_monster.x = -1000;
+            monster.cursor_stalker_monster.y = -1000;
+          }
+        } else if (clickX < 1 || clickX > 10 || clickY < 1 || clickY > 10) {
+          monster.clickMode = 0;
+          monster.cursor_stalker_monster.x = -1000;
+          monster.cursor_stalker_monster.y = -1000;
         }
+        break;
+
+      case 3:
+        (function () {
+          monster.stalkers = [];
+
+          for (var y = 0; y < monster.state.length; y++) {
+            for (var x = 0; x < monster.state[y].length; x++) {
+              if (typeof(monster.state[y][x]) === 'object') {
+                monster.state[y][x].destroy();
+              }
+
+              monster.state[y][x] = 0;
+            }
+          }
+        })();
+        monster.princess.clear();
+        monster.clickMode = 0;
+        monster.mainTitle.text = '';
+        monster.roundTitle.text = 'Round: 1';
+        break;
+
+      case 4:
+        monster.princess.clear();
+        monster.clickMode = 0;
+        monster.mainTitle.text = '';
         break;
     }
   }, this);
