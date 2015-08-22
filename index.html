@@ -28,6 +28,8 @@ var game = new Phaser.Game(1024, 768, Phaser.AUTO, '', { preload: preload, creat
       active: false,
       clickActive: false,
       clickMode: 0,
+      winTitle: null,
+      round: 1,
 
       checkFree: function (x, y) {
 
@@ -49,50 +51,68 @@ var game = new Phaser.Game(1024, 768, Phaser.AUTO, '', { preload: preload, creat
             y = -1,
             forward = true,
             sprite = null,
-            offset = 14;
+            offset = 14,
+            dead = false;
 
         return {
           start: function () {
             x = 5,
             y = 1;
+            dead = false;
+            forward = true;
 
             sprite.x = monster.position(x);
             sprite.y = monster.position(y) - offset;
+            monster.winTitle.text = '';
           },
 
           update: function () {
-            if ((forward && y < 8) || (!forward && y > 2)) {
-              if (Math.random() >= 0.5) {
-                if (forward) {
-                  y += 1;
-                } else {
-                  y -= 1;
-                }
+            if (!dead) {
+              game.world.bringToTop(sprite);
+              console.log(y, !forward);
+              if (!forward && y == 1) {
+                monster.winTitle.text = "Princess defeated you!";
+                game.world.bringToTop(monster.winTitle);
+
+                monster.active = false;
+                monster.round = 0;
+                dead = true;
               } else {
-                if (x == 1 || (Math.random() >= 0.5 && x != 10)) {
-                  x += 1;
+                if (Math.random() >= 0.5) {
+                  if (forward) {
+                    y += 1;
+
+                    if (y == 8) {
+                      forward = false;
+                    }
+                  } else {
+                    y -= 1;
+                  }
                 } else {
-                  x -= 1;
+                  if (x == 1 || (Math.random() >= 0.5 && x != 10)) {
+                    x += 1;
+                  } else {
+                    x -= 1;
+                  }
+                }
+
+                sprite.x = monster.position(x);
+                sprite.y = monster.position(y) - offset;
+
+                var positionX = x - 1,
+                    positionY = y - 2;
+
+                if (positionX >= 0 && positionY >= 0 && positionX < monster.state[0].length && positionY < monster.state.length) {
+                  if (typeof(monster.state[positionY][positionX]) === 'object' && monster.state[positionY][positionX].key === 'hole_monster') {
+                    monster.round += 1;
+                    dead = true;
+                    game.world.bringToTop(monster.winTitle);
+                    monster.winTitle.text = "Nice! Round " + monster.round;
+                    monster.active = false;
+                  }
                 }
               }
-            } else {
-              forward = !forward;
-              y -= 1;
             }
-
-            sprite.x = monster.position(x);
-            sprite.y = monster.position(y) - offset;
-
-            var positionX = x - 1,
-                positionY = y - 2;
-
-            if (positionX >= 0 && positionY >= 0 && positionX < monster.state[0].length && positionY < monster.state.length) {
-              if (typeof(monster.state[positionY][positionX]) === 'object' && monster.state[positionY][positionX].key === 'hole_monster') {
-                console.log('dead!');
-              }
-            }
-
-            //if (monster.state[y][x]);
           },
 
           create: function () {
@@ -112,7 +132,7 @@ function preload() {
   game.load.image('safe_bottom', 'assets/safe_tile_bottom.png');
   game.load.image('frame', 'assets/frame.png');
   game.load.bitmapFont('font', 'assets/font/font.png', 'assets/font/font.fnt');
-  game.load.bitmapFont('dead', 'assets/dead/font.png', 'assets/dead/font.fnt');
+  game.load.bitmapFont('font_win', 'assets/font_win/font.png', 'assets/font_win/font.fnt');
 }
 
 function create() {
@@ -141,8 +161,7 @@ function create() {
     }
   }
 
-
-  //var text = game.add.bitmapText(64, 32, 'font', 'You are the monster', 16);
+  monster.winTitle = game.add.bitmapText(monster.position(1.8), monster.position(4.5), 'font_win', '', 48);
 
   game.add.bitmapText(monster.position(12) + 11, monster.position(1) + (monster.tileSize / 2) - 4, 'font', 'Start', 16);
   monster.addSprite('frame', 12, 1);
@@ -182,10 +201,10 @@ function create() {
 
     switch (monster.clickMode) {
       case 0:
-        if (clickX == 12 && clickY == 1 && !monster.active) {
+        if (clickX == 12 && clickY == 1 && !monster.active) { // Start game
           monster.active = true;
           monster.princess.start();
-        } else if (clickX >= 12 && clickX <= 14 && clickY >= 2 && clickY <= 4) {
+        } else if (!monster.active && clickX >= 12 && clickX <= 14 && clickY >= 2 && clickY <= 4) {
           monster.clickMode = 1;
         }
 
