@@ -7,6 +7,7 @@
     <style type="text/css">
         body {
             margin: 0;
+            background-color: #000;
         }
 
         canvas {
@@ -129,6 +130,7 @@ function preload() {
   game.load.image('hole_monster', 'assets/hålmonster.png');
   game.load.image('hole_monster_silhouette', 'assets/holemonster_silhouette.png');
   game.load.image('stalker_monster', 'assets/förföljaren.png');
+  game.load.image('stalker_monster_silhouette', 'assets/förföljaren.png');
   game.load.image('princess', 'assets/princess.png');
   game.load.image('prince', 'assets/prince.png');
   game.load.image('safe_top', 'assets/safe_tile_top.png');
@@ -136,6 +138,8 @@ function preload() {
   game.load.image('beach', 'assets/beach_tile.png');
   game.load.image('water', 'assets/water_tile.png');
   game.load.image('frame', 'assets/frame.png');
+  game.load.image('edge', 'assets/edge.png');
+  game.load.image('corner', 'assets/corner.png');
   game.load.bitmapFont('font', 'assets/font/font.png', 'assets/font/font.fnt');
   game.load.bitmapFont('font_win', 'assets/font_win/font.png', 'assets/font_win/font.fnt');
 }
@@ -160,6 +164,34 @@ function create() {
     monster.addSprite('beach', x, 2);
     monster.addSprite('safe_top', x, 3);
     monster.addSprite('safe_bottom', x, 10);
+    monster.addSprite('edge', x + 1, 0).angle = 90;
+    monster.addSprite('edge', x, 12).angle = 270;
+  }
+
+  monster.addSprite('edge', 13, 0).angle = 90;
+  monster.addSprite('edge', 14, 0).angle = 90;
+  monster.addSprite('edge', 15, 0).angle = 90;
+
+  monster.addSprite('edge', 12, 12).angle = 270;
+  monster.addSprite('edge', 13, 12).angle = 270;
+  monster.addSprite('edge', 14, 12).angle = 270;
+
+  monster.addSprite('corner', 0, 0);
+  monster.addSprite('corner', 12, 0).angle = 90;
+  monster.addSprite('corner', 12, 12).angle = 180;
+  monster.addSprite('corner', 0, 12).angle = 270;
+
+  monster.addSprite('corner', 11, 0);
+  monster.addSprite('corner', 16, 0).angle = 90;
+  monster.addSprite('corner', 16, 12).angle = 180;
+  monster.addSprite('corner', 11, 12).angle = 270;
+
+  for (y = 1; y < 11; y++) {
+    monster.addSprite('edge', 0, y);
+    monster.addSprite('edge', 12, y + 1).angle = 180;
+
+    monster.addSprite('edge', 11, y);
+    monster.addSprite('edge', 16, y + 1).angle = 180;
   }
 
   for (x = 1; x < 11; x++) {
@@ -173,8 +205,10 @@ function create() {
 
 
   monster.addSprite('hole_monster', 12, 8);
-  monster.cursor_hole_monster = monster.addSprite('hole_monster_silhouette', -10, -10);
   monster.addSprite('stalker_monster', 13, 6);
+
+  monster.cursor_stalker_monster = monster.addSprite('stalker_monster_silhouette', -1000, -1000);
+  monster.cursor_hole_monster = monster.addSprite('hole_monster_silhouette', -1000, -1000);
 
   monster.princess.create();
 
@@ -197,7 +231,9 @@ function create() {
         if (clickX == 13 && clickY == 1 && !monster.active) { // Start game
           monster.active = true;
           monster.princess.start();
-        } else if (!monster.active && clickX >= 12 && clickX <= 14 && clickY >= 8 && clickY <= 10) {
+        } else if (clickX == 13 && clickY == 6 && !monster.active) { // Stalker
+          monster.clickMode = 2;
+        } else if (!monster.active && clickX >= 12 && clickX <= 14 && clickY >= 8 && clickY <= 10) { // Holer
           monster.clickMode = 1;
         }
 
@@ -240,6 +276,12 @@ function create() {
           monster.cursor_hole_monster.y = -1000;
         }
         break;
+
+      case 2:
+        if (clickX >= 1 && clickX <= 10 && clickY >= 4 && clickY <= 9) {
+
+        }
+        break;
     }
   }, this);
 }
@@ -257,6 +299,9 @@ function update() {
   if (monster.clickMode == 1) {
     monster.cursor_hole_monster.x = monster.tileSize * (parseInt(game.input.x / monster.tileSize, 10) - 1);
     monster.cursor_hole_monster.y = monster.tileSize * (parseInt(game.input.y / monster.tileSize, 10) - 1);
+  } else if (monster.clickMode == 2) {
+    monster.cursor_stalker_monster.x = monster.tileSize * parseInt(game.input.x / monster.tileSize, 10);
+    monster.cursor_stalker_monster.y = monster.tileSize * parseInt(game.input.y / monster.tileSize, 10);
   }
 }
 
