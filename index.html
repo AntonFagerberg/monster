@@ -190,6 +190,69 @@ var game = new Phaser.Game(1024, 768, Phaser.AUTO, 'game', { preload: preload, c
                       monster.sound.coin.play();
                     } else {
 
+                      if (key == 'stalker_monster') {
+                        (function () {
+                          var stalker = monster.state[positionY][positionX];
+
+                          for (var i = 0; i < stalker.hearts.length; i++) {
+                            stalker.hearts[i].destroy();
+                          }
+
+                          var hearts = [];
+
+                          stalker.xx = positionX;
+                          stalker.yy = positionY;
+
+                          stalker.animations.add('idle');
+                          stalker.animations.play('idle', 10, true);
+                          stalker.hearts = [];
+                          stalker.hearts[0] = monster.addSprite('heart', 0, 0);
+                          stalker.hearts[0].x = stalker.x - 22;
+                          stalker.hearts[0].y = stalker.y + 32;
+
+                          stalker.hearts[1] = monster.addSprite('heart', 0, 0);
+                          stalker.hearts[1].x = stalker.x;
+                          stalker.hearts[1].y = stalker.y + 32;
+
+                          stalker.hearts[2] = monster.addSprite('heart', 0, 0);
+                          stalker.hearts[2].x = stalker.x + 22;
+                          stalker.hearts[2].y = stalker.y + 32;
+
+                          stalker.hearts.push(monster.addSprite('heart', -1000, -1000));
+                        })();
+                      } else if (key == 'hole_monster') {
+                        (function () {
+                          var holeMonster = monster.state[positionY][positionX];
+
+                          for (var i = 0; i < holeMonster.hearts.length; i++) {
+                            holeMonster.hearts[i].destroy();
+                          }
+
+                          holeMonster.hearts = [];
+                          holeMonster.hearts[0] = monster.addSprite('heart', 0, 0);
+                          holeMonster.hearts[0].x = holeMonster.x;
+                          holeMonster.hearts[0].y = holeMonster.y + 140;
+
+                          holeMonster.hearts[1] = monster.addSprite('heart', 0, 0);
+                          holeMonster.hearts[1].x = holeMonster.x + 32;
+                          holeMonster.hearts[1].y = holeMonster.y + 140;
+
+                          holeMonster.hearts[2] = monster.addSprite('heart', 0, 0);
+                          holeMonster.hearts[2].x = holeMonster.x + 64;
+                          holeMonster.hearts[2].y = holeMonster.y + 140;
+
+                          holeMonster.hearts[3] = monster.addSprite('heart', 0, 0);
+                          holeMonster.hearts[3].x = holeMonster.x + 96;
+                          holeMonster.hearts[3].y = holeMonster.y + 140;
+
+                          holeMonster.hearts[4] = monster.addSprite('heart', 0, 0);
+                          holeMonster.hearts[4].x = holeMonster.x + 128;
+                          holeMonster.hearts[4].y = holeMonster.y + 140;
+
+                          holeMonster.hearts.push(monster.addSprite('heart', -1000, -1000));
+                        })();
+                      }
+
                       (function () {
                         for (var y = 0; y < monster.state.length; y++) {
                           for (var x = 0; x < monster.state[y].length; x++) {
@@ -258,6 +321,10 @@ var game = new Phaser.Game(1024, 768, Phaser.AUTO, 'game', { preload: preload, c
                       game.world.bringToTop(monster.mainTitle);
                       monster.active = false;
                       monster.clickMode = 4;
+
+                      monster.coins += 5;
+                      monster.coinText.text = '' + monster.coins;
+
                       if (monster.round > monster.highscore) {
                         monster.highscore = monster.round;
                       }
@@ -282,8 +349,8 @@ var game = new Phaser.Game(1024, 768, Phaser.AUTO, 'game', { preload: preload, c
 function preload() {
   game.load.image('ground_1', 'assets/ground_tile_1.png');
   game.load.image('ground_2', 'assets/ground_tile_2.png');
-  game.load.image('hole_monster', 'assets/hålmonster.png');
-  game.load.image('hole_monster_silhouette', 'assets/holemonster_silhouette.png');
+  game.load.spritesheet('hole_monster', 'assets/hålmonster.png', 96, 96);
+  game.load.spritesheet('hole_monster_silhouette', 'assets/hålmonster.png', 96, 96);
   //game.load.image('gold_monster', 'assets/goldmonster.png');
   game.load.spritesheet('gold_monster', 'assets/goldmonster.png', 32, 32)
   game.load.spritesheet('gold_monster_silhouette', 'assets/goldmonster.png', 32, 32);
@@ -376,7 +443,12 @@ function create() {
   game.add.bitmapText(monster.position(13), monster.position(1) + (monster.tileSize / 2) - 4, 'font', 'Start', 16);
   monster.roundTitle = game.add.bitmapText(monster.position(5), monster.position(11) + (monster.tileSize / 2) - 4, 'font', 'Round: 1\nHighscore: ' + monster.highscore, 16);
 
-  monster.addSprite('hole_monster', 12, 8);
+  (function () {
+      var hole = monster.addSprite('hole_monster', 12, 8);
+      hole.animations.add('idle');
+      hole.animations.play('idle', 10, true);
+  })();
+
 
   (function () {
     var gold = monster.addSprite('gold_monster', 13, 4);
@@ -470,15 +542,17 @@ function create() {
           monster.princess.start();
           monster.sound.select.play();
           monster.roundTitle.text = 'Round: ' + monster.round + '\nHighscore: ' + monster.highscore;
-        } else if (clickX == 13 && clickY == 6 && !monster.active) { // Stalker
+        } else if (clickX == 13 && clickY == 6 && !monster.active  && monster.coins >= 7) { // Stalker
           monster.clickMode = 2;
           monster.sound.select.play();
-        } else if (!monster.active && clickX >= 12 && clickX <= 14 && clickY >= 8 && clickY <= 10) { // Holer
+        } else if (!monster.active && clickX >= 12 && clickX <= 14 && clickY >= 8 && clickY <= 10  && monster.coins >= 3) { // Holer
           monster.clickMode = 1;
           monster.sound.select.play();
-        } else if (clickX == 13 && clickY == 4 && !monster.active) { // Golder
+        } else if (clickX == 13 && clickY == 4 && !monster.active  && monster.coins >= 1) { // Golder
           monster.clickMode = 5;
           monster.sound.select.play();
+        } else {
+          monster.sound.error.play();
         }
 
         break;
@@ -515,6 +589,8 @@ function create() {
             (function () {
               var hearts = [],
                   holeMonster = monster.addSprite('hole_monster', clickX - 1, clickY - 1);
+                  holeMonster.animations.add('idle');
+                  holeMonster.animations.play('idle', 10, true);
 
               // goldMonster.animations.add('idle');
               // goldMonster.animations.play('idle', 15, true);
