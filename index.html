@@ -10,17 +10,23 @@
             background-color: #000;
         }
 
+        a {
+          color: #303030;
+          text-decoration: none;
+        }
+
         canvas {
           margin: 0 auto;
         }
     </style>
 </head>
 <body>
-
-
+<div id="game"></div>
+<br><br>
+<center><a href="http://www.newgrounds.com/audio/listen/625238">"Cartoon menu music" by fearing</a></center>
 <script type="text/javascript">
 
-var game = new Phaser.Game(1024, 768, Phaser.AUTO, '', { preload: preload, create: create, update: update }),
+var game = new Phaser.Game(1024, 768, Phaser.AUTO, 'game', { preload: preload, create: create, update: update }),
   monster = (function () {
     return {
       state: [],
@@ -83,10 +89,11 @@ var game = new Phaser.Game(1024, 768, Phaser.AUTO, '', { preload: preload, creat
           update: function () {
             if (monster.active) {
               if (!forward && y == 3) {
-                monster.mainTitle.text = "Princess defeated you!";
+                monster.mainTitle.text = "  The princess won - you lose!";
                 monster.dark.visible = true;
                 game.world.bringToTop(monster.dark);
                 monster.roundTitle.text = 'Game Over!\nHighscore: ' + monster.highscore;
+                monster.sound.dead.play();
                 game.world.bringToTop(monster.mainTitle);
                 monster.active = false;
                 monster.round = 1;
@@ -162,10 +169,11 @@ var game = new Phaser.Game(1024, 768, Phaser.AUTO, '', { preload: preload, creat
                     var key = monster.state[positionY][positionX].key
 
                     if (key == 'gold_monster') {
-                      monster.coins += 3;
+                      monster.coins += 5;
                       monster.coinText.text = '' + monster.coins;
                       monster.state[positionY][positionX].destroy();
                       monster.state[positionY][positionX] = 0;
+                      monster.sound.coin.play();
                     } else {
                       if (key == 'stalker_monster') {
                         (function () {
@@ -192,8 +200,11 @@ var game = new Phaser.Game(1024, 768, Phaser.AUTO, '', { preload: preload, creat
                         })();
                       }
 
+                      monster.dark.visible = true;
+                      game.world.bringToTop(monster.dark);
+                      //monster.mainTitle.text = "  The princess won - you lose!";
+                      monster.mainTitle.text = "  Victory - the princess is dead!";
                       game.world.bringToTop(monster.mainTitle);
-                      monster.mainTitle.text = 'Nice!';
                       monster.active = false;
                       monster.clickMode = 4;
                       if (monster.round > monster.highscore) {
@@ -222,8 +233,9 @@ function preload() {
   game.load.image('ground_2', 'assets/ground_tile_2.png');
   game.load.image('hole_monster', 'assets/hålmonster.png');
   game.load.image('hole_monster_silhouette', 'assets/holemonster_silhouette.png');
-  game.load.image('gold_monster', 'assets/goldmonster.png');
-  game.load.image('gold_monster_silhouette', 'assets/goldmonster.png');
+  //game.load.image('gold_monster', 'assets/goldmonster.png');
+  game.load.spritesheet('gold_monster', 'assets/goldmonster.png', 32, 32)
+  game.load.spritesheet('gold_monster_silhouette', 'assets/goldmonster.png', 32, 32);
   game.load.image('stalker_monster', 'assets/förföljaren.png');
   game.load.image('stalker_monster_silhouette', 'assets/förföljaren.png');
   game.load.image('princess', 'assets/princess.png');
@@ -238,7 +250,16 @@ function preload() {
   game.load.image('dark', 'assets/dark.png');
   game.load.image('coin', 'assets/coin.png');
   game.load.bitmapFont('font', 'assets/font/font.png', 'assets/font/font.fnt');
+  game.load.bitmapFont('font_orange', 'assets/font_orange/font.png', 'assets/font_orange/font.fnt');
+  game.load.bitmapFont('font_pink', 'assets/font_pink/font.png', 'assets/font_pink/font.fnt');
   game.load.bitmapFont('font_win', 'assets/font_win/font.png', 'assets/font_win/font.fnt');
+  game.load.bitmapFont('font_lose', 'assets/font_lose/font.png', 'assets/font_lose/font.fnt');
+  game.load.audio('coin', 'assets/coin.mp3');
+  game.load.audio('error', 'assets/error.mp3');
+  game.load.audio('remove', 'assets/remove.mp3');
+  game.load.audio('select', 'assets/select.mp3');
+  game.load.audio('dead', 'assets/dead.mp3');
+  game.load.audio('music', 'assets/music.mp3');
 }
 
 function create() {
@@ -297,18 +318,31 @@ function create() {
     }
   }
 
-  monster.mainTitle = game.add.bitmapText(monster.position(1.8), monster.position(4.5), 'font_win', '', 48);
+  monster.mainTitle = game.add.bitmapText(monster.position(1.55), monster.position(5.3), 'font_lose', '', 22);
 
   game.add.bitmapText(monster.position(13), monster.position(1) + (monster.tileSize / 2) - 4, 'font', 'Start', 16);
   monster.roundTitle = game.add.bitmapText(monster.position(5), monster.position(11) + (monster.tileSize / 2) - 4, 'font', 'Round: 1\nHighscore: ' + monster.highscore, 16);
 
   monster.addSprite('hole_monster', 12, 8);
   monster.addSprite('stalker_monster', 13, 6);
-  monster.addSprite('gold_monster', 13, 4);
+  (function () {
+    var gold = monster.addSprite('gold_monster', 13, 4);
+    // var frames = [];
+    // for (var x = 0; x <= 29; x++) {
+    //   frames.push(x);
+    // }
+
+    gold.animations.add('idle');
+    //idle.play(15, true);
+    gold.animations.play('idle', 15, true);
+
+  })();
 
   monster.cursor_stalker_monster = monster.addSprite('stalker_monster_silhouette', -1000, -1000);
   monster.cursor_hole_monster = monster.addSprite('hole_monster_silhouette', -1000, -1000);
   monster.cursor_gold_monster = monster.addSprite('gold_monster_silhouette', -1000, -1000);
+  //monster.cursor_gold_monster.animations.add('idle');
+  //monster.cursor_gold_monster.animations.play('idle', 15, true);
 
   monster.princess.create();
 
@@ -333,8 +367,20 @@ function create() {
   //sprite.scale.setTo(2, 2);
   sprite.smoothed = false;
 
-  game.add.bitmapText(monster.position(11), (monster.tileSize / 2) - 16, 'font', 'Ludum Dare 33 - 2015', 16);
-  game.add.bitmapText(monster.position(11), monster.position(11) + (monster.tileSize / 2) - 4, 'font', '   Anton Fagerberg\nAlexander Lieszkovszki', 16);
+  game.add.bitmapText(monster.position(11), (monster.tileSize / 2) - 16, 'font_orange', 'Ludum Dare 33 - 2015', 16);
+  game.add.bitmapText(monster.position(11), monster.position(11) + (monster.tileSize / 2) - 4, 'font_orange', '   Anton Fagerberg\nAlexander Lieszkovszki', 16);
+
+  game.add.bitmapText(monster.position(2), (monster.tileSize / 2) - 16, 'font_pink', 'You are the monster! (Stop the princess)', 16);
+
+  monster.sound = {};
+  monster.sound.coin = game.add.audio('coin');
+  monster.sound.error = game.add.audio('error');
+  monster.sound.remove = game.add.audio('remove');
+  monster.sound.select = game.add.audio('select');
+  monster.sound.dead = game.add.audio('dead');
+  monster.sound.music = game.add.audio('music');
+  monster.sound.music.loop = true;
+  monster.sound.music.play();
 
   game.input.onDown.add(function () {
     var clickX = parseInt(game.input.x / monster.tileSize, 10),
@@ -355,13 +401,17 @@ function create() {
         if (clickX == 13 && clickY == 1 && !monster.active) { // Start game
           monster.active = true;
           monster.princess.start();
+          monster.sound.select.play();
           monster.roundTitle.text = 'Round: ' + monster.round + '\nHighscore: ' + monster.highscore;
         } else if (clickX == 13 && clickY == 6 && !monster.active) { // Stalker
           monster.clickMode = 2;
+          monster.sound.select.play();
         } else if (!monster.active && clickX >= 12 && clickX <= 14 && clickY >= 8 && clickY <= 10) { // Holer
           monster.clickMode = 1;
+          monster.sound.select.play();
         } else if (clickX == 13 && clickY == 4 && !monster.active) { // Golder
           monster.clickMode = 5;
+          monster.sound.select.play();
         }
 
         break;
@@ -394,37 +444,45 @@ function create() {
             monster.state[positionY + 1][positionX - 1] = 1;
             monster.state[positionY + 1][positionX] = 1;
             monster.state[positionY + 1][positionX + 1] = 1;
+            monster.sound.coin.play();
             // monster.clickMode = 0;
             // monster.cursor_hole_monster.x = -1000;
             // monster.cursor_hole_monster.y = -1000;
+          } else {
+            monster.sound.error.play();
           }
         } else if (clickX < 1 || clickX > 10 || clickY < 1 || clickY > 10) {
           monster.clickMode = 0;
           monster.cursor_hole_monster.x = -1000;
           monster.cursor_hole_monster.y = -1000;
+          monster.sound.remove.play();
+        } else {
+          monster.sound.error.play();
         }
         break;
 
       case 2:
-        if (clickX >= 1 && clickX <= 10 && clickY >= 4 && clickY <= 9) {
-          var positionX = clickX - 1,
-              positionY = clickY - 4;
+      var positionX = clickX - 1,
+          positionY = clickY - 4;
 
-          if (monster.state[positionY][positionX] == 0 && monster.coins >= 5) {
+        if (clickX >= 1 && clickX <= 10 && clickY >= 4 && clickY <= 9 && monster.state[positionY][positionX] == 0 && monster.coins >= 5) {
             monster.coins -= 5;
             monster.coinText.text = '' + monster.coins;
             monster.state[positionY][positionX] = monster.addSprite('stalker_monster', clickX, clickY);
             monster.state[positionY][positionX].xx = positionX;
             monster.state[positionY][positionX].yy = positionY;
             monster.stalkers.push(monster.state[positionY][positionX]);
+            monster.sound.coin.play();
             // monster.clickMode = 0;
             // monster.cursor_stalker_monster.x = -1000;
             // monster.cursor_stalker_monster.y = -1000;
-          }
         } else if (clickX < 1 || clickX > 10 || clickY < 1 || clickY > 10) {
           monster.clickMode = 0;
           monster.cursor_stalker_monster.x = -1000;
           monster.cursor_stalker_monster.y = -1000;
+          monster.sound.remove.play();
+        } else {
+          monster.sound.error.play();
         }
         break;
 
@@ -449,6 +507,7 @@ function create() {
         monster.dark.visible = false;
         monster.coins = 25;
         monster.coinText.text = '25';
+        monster.sound.remove.play();
         break;
 
       case 4:
@@ -456,22 +515,27 @@ function create() {
         monster.clickMode = 0;
         monster.mainTitle.text = '';
         monster.dark.visible = false;
+        monster.sound.remove.play();
         break;
 
       case 5:
-        if (clickX >= 1 && clickX <= 10 && clickY >= 4 && clickY <= 9) {
-          var positionX = clickX - 1,
-              positionY = clickY - 4;
+      var positionX = clickX - 1,
+          positionY = clickY - 4;
 
-          if (monster.state[positionY][positionX] == 0 && monster.coins >= 1) {
-            monster.coins -= 1;
-            monster.coinText.text = '' + monster.coins;
-            monster.state[positionY][positionX] = monster.addSprite('gold_monster', clickX, clickY);
-          }
+        if (clickX >= 1 && clickX <= 10 && clickY >= 4 && clickY <= 9 && monster.state[positionY][positionX] == 0 && monster.coins >= 1) {
+          monster.coins -= 1;
+          monster.coinText.text = '' + monster.coins;
+          monster.sound.coin.play();
+          monster.state[positionY][positionX] = monster.addSprite('gold_monster', clickX, clickY);
+          monster.state[positionY][positionX].animations.add('idle');
+          monster.state[positionY][positionX].animations.play('idle', 15, true);
         } else if (clickX < 1 || clickX > 10 || clickY < 1 || clickY > 10) {
           monster.clickMode = 0;
           monster.cursor_gold_monster.x = -1000;
           monster.cursor_gold_monster.y = -1000;
+          monster.sound.remove.play();
+        } else {
+          monster.sound.error.play();
         }
         break;
     }
