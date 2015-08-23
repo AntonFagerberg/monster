@@ -30,6 +30,8 @@ var game = new Phaser.Game(1024, 768, Phaser.AUTO, '', { preload: preload, creat
       clickMode: 0,
       mainTitle: null,
       round: 1,
+      highscore: 0,
+      coins: 100,
       stalkers: [],
 
       addSprite: function (name, x, y) {
@@ -82,7 +84,9 @@ var game = new Phaser.Game(1024, 768, Phaser.AUTO, '', { preload: preload, creat
             if (monster.active) {
               if (!forward && y == 3) {
                 monster.mainTitle.text = "Princess defeated you!";
-                monster.roundTitle.text = 'Game Over!';
+                monster.dark.visible = true;
+                game.world.bringToTop(monster.dark);
+                monster.roundTitle.text = 'Game Over!\nHighscore: ' + monster.highscore;
                 game.world.bringToTop(monster.mainTitle);
                 monster.active = false;
                 monster.round = 1;
@@ -153,12 +157,51 @@ var game = new Phaser.Game(1024, 768, Phaser.AUTO, '', { preload: preload, creat
 
                 if (positionX >= 0 && positionY >= 0 && positionX < monster.state[0].length && positionY < monster.state.length) {
                   if (typeof(monster.state[positionY][positionX]) === 'object') {
-                    monster.round += 1;
-                    game.world.bringToTop(monster.mainTitle);
-                    monster.mainTitle.text = 'Nice!';
-                    monster.roundTitle.text = 'Round: ' + monster.round;
-                    monster.active = false;
-                    monster.clickMode = 4;
+                    // monster.dark.visible = true;
+                    // game.world.bringToTop(monster.dark);
+                    var key = monster.state[positionY][positionX].key
+
+                    if (key == 'gold_monster') {
+                      monster.coins += 3;
+                      monster.coinText.text = '' + monster.coins;
+                      monster.state[positionY][positionX].destroy();
+                      monster.state[positionY][positionX] = 0;
+                    } else {
+                      if (key == 'stalker_monster') {
+                        (function () {
+                          var i = -1;
+                          for (var x = 0; x < monster.stalkers.length; x++) {
+                            if (monster.stalkers[x] == monster.state[positionY][positionX]) {
+                              i = x;
+                            }
+                          }
+                          monster.stalkers.splice(i, 1);
+                        })();
+                      }
+
+                      monster.state[positionY][positionX].destroy();
+                      monster.state[positionY][positionX] = 0;
+
+                      if (key == 'hole_monster') {
+                        (function () {
+                          for (var x = -1; x <= 1; x++) {
+                            for (var y = -1; y <= 1; y++) {
+                              monster.state[positionY + y][positionX + x] = 0;
+                            }
+                          }
+                        })();
+                      }
+
+                      game.world.bringToTop(monster.mainTitle);
+                      monster.mainTitle.text = 'Nice!';
+                      monster.active = false;
+                      monster.clickMode = 4;
+                      if (monster.round > monster.highscore) {
+                        monster.highscore = monster.round;
+                      }
+                      monster.roundTitle.text = 'Round: ' + monster.round + '\nHighscore: ' + monster.highscore;
+                      monster.round += 1;
+                    }
                   }
                 }
               }
@@ -179,6 +222,8 @@ function preload() {
   game.load.image('ground_2', 'assets/ground_tile_2.png');
   game.load.image('hole_monster', 'assets/hålmonster.png');
   game.load.image('hole_monster_silhouette', 'assets/holemonster_silhouette.png');
+  game.load.image('gold_monster', 'assets/goldmonster.png');
+  game.load.image('gold_monster_silhouette', 'assets/goldmonster.png');
   game.load.image('stalker_monster', 'assets/förföljaren.png');
   game.load.image('stalker_monster_silhouette', 'assets/förföljaren.png');
   game.load.image('princess', 'assets/princess.png');
@@ -190,6 +235,8 @@ function preload() {
   game.load.image('frame', 'assets/frame.png');
   game.load.image('edge', 'assets/edge.png');
   game.load.image('corner', 'assets/corner.png');
+  game.load.image('dark', 'assets/dark.png');
+  game.load.image('coin', 'assets/coin.png');
   game.load.bitmapFont('font', 'assets/font/font.png', 'assets/font/font.fnt');
   game.load.bitmapFont('font_win', 'assets/font_win/font.png', 'assets/font_win/font.fnt');
 }
@@ -253,16 +300,38 @@ function create() {
   monster.mainTitle = game.add.bitmapText(monster.position(1.8), monster.position(4.5), 'font_win', '', 48);
 
   game.add.bitmapText(monster.position(13), monster.position(1) + (monster.tileSize / 2) - 4, 'font', 'Start', 16);
-  monster.roundTitle = game.add.bitmapText(monster.position(5), monster.position(11) + (monster.tileSize / 2) - 4, 'font', 'Round: 1', 16);
-
+  monster.roundTitle = game.add.bitmapText(monster.position(5), monster.position(11) + (monster.tileSize / 2) - 4, 'font', 'Round: 1\nHighscore: ' + monster.highscore, 16);
 
   monster.addSprite('hole_monster', 12, 8);
   monster.addSprite('stalker_monster', 13, 6);
+  monster.addSprite('gold_monster', 13, 4);
 
   monster.cursor_stalker_monster = monster.addSprite('stalker_monster_silhouette', -1000, -1000);
   monster.cursor_hole_monster = monster.addSprite('hole_monster_silhouette', -1000, -1000);
+  monster.cursor_gold_monster = monster.addSprite('gold_monster_silhouette', -1000, -1000);
 
   monster.princess.create();
+
+  monster.dark = monster.addSprite('dark', 1, 1);
+  monster.dark.scale.setTo(20,20)
+  monster.dark.visible = false;
+
+  var sprite = game.add.sprite(13 * monster.tileSize - 24, 2 * monster.tileSize, 'coin');
+  sprite.scale.setTo(2, 2);
+  sprite.smoothed = false;
+
+  monster.coinText = game.add.bitmapText(monster.position(13) + 32, monster.position(2) + (monster.tileSize / 2) - 8, 'font', ''+monster.coins, 16);
+
+  game.add.sprite(13 * monster.tileSize, 5 * monster.tileSize, 'coin');
+  game.add.bitmapText(monster.position(13) + 32, monster.position(5) + 8, 'font', '1', 16);
+
+  game.add.sprite(13 * monster.tileSize, 7 * monster.tileSize, 'coin');
+  game.add.bitmapText(monster.position(13) + 32, monster.position(7) + 8, 'font', '5', 16);
+
+  game.add.sprite(13 * monster.tileSize, 10 * monster.tileSize + 42, 'coin');
+  game.add.bitmapText(monster.position(13) + 32, monster.position(10) + 50, 'font', '3', 16);
+  //sprite.scale.setTo(2, 2);
+  sprite.smoothed = false;
 
   game.input.onDown.add(function () {
     var clickX = parseInt(game.input.x / monster.tileSize, 10),
@@ -273,7 +342,7 @@ function create() {
     for (var y = 0; y != monster.state.length; y++) {
       var line = "| ";
       for (var x = 0; x != monster.state[y].length; x++) {
-        line = line + monster.state[y][x] + " | ";
+        line = line + (typeof(monster.state[y][x]) == 'object' && monster.state[y][x].key || monster.state[y][x]) + " | ";
       }
       console.log(line + Math.random());
     }
@@ -283,16 +352,19 @@ function create() {
         if (clickX == 13 && clickY == 1 && !monster.active) { // Start game
           monster.active = true;
           monster.princess.start();
+          monster.roundTitle.text = 'Round: ' + monster.round + '\nHighscore: ' + monster.highscore;
         } else if (clickX == 13 && clickY == 6 && !monster.active) { // Stalker
           monster.clickMode = 2;
         } else if (!monster.active && clickX >= 12 && clickX <= 14 && clickY >= 8 && clickY <= 10) { // Holer
           monster.clickMode = 1;
+        } else if (clickX == 13 && clickY == 4 && !monster.active) { // Golder
+          monster.clickMode = 5;
         }
 
         break;
 
       case 1:
-        if (clickX >= 2 && clickX <= 9 && clickY >= 5 && clickY <= 8) {
+        if (clickX >= 2 && clickX <= 9 && clickY >= 5 && clickY <= 8 && monster.coins >= 3) {
           var free = true,
               positionX = clickX - 1,
               positionY = clickY - 4;
@@ -309,6 +381,8 @@ function create() {
 
           if (free) {
             monster.state[positionY][positionX] = monster.addSprite('hole_monster', clickX - 1, clickY - 1);
+            monster.coins -= 3;
+            monster.coinText.text = '' + monster.coins;
             monster.state[positionY - 1][positionX - 1] = 1;
             monster.state[positionY - 1][positionX] = 1;
             monster.state[positionY - 1][positionX + 1] = 1;
@@ -317,10 +391,9 @@ function create() {
             monster.state[positionY + 1][positionX - 1] = 1;
             monster.state[positionY + 1][positionX] = 1;
             monster.state[positionY + 1][positionX + 1] = 1;
-
-            monster.clickMode = 0;
-            monster.cursor_hole_monster.x = -1000;
-            monster.cursor_hole_monster.y = -1000;
+            // monster.clickMode = 0;
+            // monster.cursor_hole_monster.x = -1000;
+            // monster.cursor_hole_monster.y = -1000;
           }
         } else if (clickX < 1 || clickX > 10 || clickY < 1 || clickY > 10) {
           monster.clickMode = 0;
@@ -334,14 +407,16 @@ function create() {
           var positionX = clickX - 1,
               positionY = clickY - 4;
 
-          if (monster.state[positionY][positionX] == 0) {
+          if (monster.state[positionY][positionX] == 0 && monster.coins >= 5) {
+            monster.coins -= 5;
+            monster.coinText.text = '' + monster.coins;
             monster.state[positionY][positionX] = monster.addSprite('stalker_monster', clickX, clickY);
             monster.state[positionY][positionX].xx = positionX;
             monster.state[positionY][positionX].yy = positionY;
             monster.stalkers.push(monster.state[positionY][positionX]);
-            monster.clickMode = 0;
-            monster.cursor_stalker_monster.x = -1000;
-            monster.cursor_stalker_monster.y = -1000;
+            // monster.clickMode = 0;
+            // monster.cursor_stalker_monster.x = -1000;
+            // monster.cursor_stalker_monster.y = -1000;
           }
         } else if (clickX < 1 || clickX > 10 || clickY < 1 || clickY > 10) {
           monster.clickMode = 0;
@@ -367,13 +442,34 @@ function create() {
         monster.princess.clear();
         monster.clickMode = 0;
         monster.mainTitle.text = '';
-        monster.roundTitle.text = 'Round: 1';
+        monster.roundTitle.text = 'Round: 1\nHighscore: ' + monster.highscore;
+        monster.dark.visible = false;
+        monster.coins = 25;
+        monster.coinText.text = '25';
         break;
 
       case 4:
         monster.princess.clear();
         monster.clickMode = 0;
         monster.mainTitle.text = '';
+        monster.dark.visible = false;
+        break;
+
+      case 5:
+        if (clickX >= 1 && clickX <= 10 && clickY >= 4 && clickY <= 9) {
+          var positionX = clickX - 1,
+              positionY = clickY - 4;
+
+          if (monster.state[positionY][positionX] == 0 && monster.coins >= 1) {
+            monster.coins -= 1;
+            monster.coinText.text = '' + monster.coins;
+            monster.state[positionY][positionX] = monster.addSprite('gold_monster', clickX, clickY);
+          }
+        } else if (clickX < 1 || clickX > 10 || clickY < 1 || clickY > 10) {
+          monster.clickMode = 0;
+          monster.cursor_gold_monster.x = -1000;
+          monster.cursor_gold_monster.y = -1000;
+        }
         break;
     }
   }, this);
@@ -395,6 +491,9 @@ function update() {
   } else if (monster.clickMode == 2) {
     monster.cursor_stalker_monster.x = monster.tileSize * parseInt(game.input.x / monster.tileSize, 10);
     monster.cursor_stalker_monster.y = monster.tileSize * parseInt(game.input.y / monster.tileSize, 10);
+  } else if (monster.clickMode == 5) {
+    monster.cursor_gold_monster.x = monster.tileSize * parseInt(game.input.x / monster.tileSize, 10);
+    monster.cursor_gold_monster.y = monster.tileSize * parseInt(game.input.y / monster.tileSize, 10);
   }
 }
 
