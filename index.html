@@ -2,17 +2,12 @@
 <html lang="en">
 <head>
 	<meta charset="UTF-8" />
-	<title>Phaser - Making your first game, part 1</title>
+	<title>You are the monster! (Stop the princess)</title>
     <script src="//cdn.jsdelivr.net/phaser/2.2.2/phaser.min.js"></script>
     <style type="text/css">
         body {
             margin: 0;
             background-color: #000;
-        }
-
-        a {
-          color: #303030;
-          text-decoration: none;
         }
 
         canvas {
@@ -21,19 +16,16 @@
     </style>
 </head>
 <body>
-<div id="game"></div>
-<br><br>
-<center><a href="http://www.newgrounds.com/audio/listen/625238">"Cartoon menu music" by fearing</a></center>
 <script type="text/javascript">
 
-var game = new Phaser.Game(1024, 768, Phaser.AUTO, 'game', { preload: preload, create: create, update: update }),
+var game = new Phaser.Game(1024, 768, Phaser.AUTO, '', { preload: preload, create: create, update: update }),
   monster = (function () {
     return {
       state: [],
       tick: 0,
       tileSize: 64,
       active: false,
-      clickMode: 0,
+      clickMode: 3,
       mainTitle: null,
       round: 1,
       highscore: 0,
@@ -263,7 +255,7 @@ var game = new Phaser.Game(1024, 768, Phaser.AUTO, 'game', { preload: preload, c
                                 if (monster.state[y][x].key == 'hole_monster') {
                                   for (var xx = -1; xx <= 1; xx++) {
                                     for (var yy = -1; yy <= 1; yy++) {
-                                      if (xx != 0 && yy != 0) {
+                                      if (xx != 0 || yy != 0) {
                                         monster.state[y + yy][x + xx] = 0;
                                       }
                                     }
@@ -339,7 +331,12 @@ var game = new Phaser.Game(1024, 768, Phaser.AUTO, 'game', { preload: preload, c
 
           create: function () {
             sprite = monster.addSprite('princess', x, y)
+            sprite.animations.add('idle');
+            sprite.animations.play('idle', 10, true);
+
             prince = monster.addSprite('prince', x, y)
+            prince.animations.add('idle');
+            prince.animations.play('idle', 10, true);
           }
         };
       })()
@@ -356,8 +353,8 @@ function preload() {
   game.load.spritesheet('gold_monster_silhouette', 'assets/goldmonster.png', 32, 32);
   game.load.spritesheet('stalker_monster', 'assets/stalker.png', 32, 32);
   game.load.spritesheet('stalker_monster_silhouette', 'assets/stalker.png', 32, 32);
-  game.load.image('princess', 'assets/princess.png');
-  game.load.image('prince', 'assets/prince.png');
+  game.load.spritesheet('princess', 'assets/princess.png', 32, 32);
+  game.load.spritesheet('prince', 'assets/prince.png', 32, 32);
   game.load.image('safe_top', 'assets/safe_tile_top.png');
   game.load.image('safe_bottom', 'assets/safe_tile_bottom.png');
   game.load.image('beach', 'assets/beach_tile.png');
@@ -486,7 +483,33 @@ function create() {
 
   monster.dark = monster.addSprite('dark', 1, 1);
   monster.dark.scale.setTo(20,20)
-  monster.dark.visible = false;
+  // monster.dark.visible = false;53
+  var intro = 'Oh no!\n\n' +
+  'The princess is coming to save the prince.\n' +
+  'You must summon your monsters and stop her!\n\n' +
+
+  'The yellow thing will steal 5 coins every time \n' +
+  'the princess steps on it but no damage is done.\n\n' +
+
+  'The black thing walks every second turn in a\n' +
+  'random direction. Full health if it gets her!\n\n' +
+
+  'The green thing has a lot of health but can\'t\n' +
+  'move its clumsy ass around! Full health for\n' +
+  'eating the princess.\n\n' +
+
+  '5 coins for every successful round. Be careful\n' +
+  'and spend it wisely...\n\n' +
+
+  'One monster heart is lost in every turn.\n\n' +
+
+  'Now, go get her you monstrous beautiful things!\n\n\n\n\n\n' +
+
+  'Made by Anton Fagerberg + Alexander Lieszkovszki\n' +
+  'for Ludum Dare Jam 33, August 2015\n\n\n' +
+  'Game engine: Paser\n' +
+  'Music: "Cartoon menu music" by fearing';
+  monster.intro = game.add.bitmapText(70, 70, 'font_orange', intro, 16);
 
   var sprite = game.add.sprite(13 * monster.tileSize - 24, 2 * monster.tileSize, 'coin');
   sprite.scale.setTo(2, 2);
@@ -714,6 +737,7 @@ function create() {
         monster.coins = 30;
         monster.coinText.text = '30';
         monster.sound.remove.play();
+        monster.intro.visible = false;
         break;
 
       case 4:
