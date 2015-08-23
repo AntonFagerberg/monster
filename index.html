@@ -20,6 +20,7 @@
 
 var game = new Phaser.Game(1024, 768, Phaser.AUTO, '', { preload: preload, create: create, update: update }),
   monster = (function () {
+    console.log('http://www.antonfagerberg.com - Thanks for playing!');
     return {
       state: [],
       tick: 0,
@@ -548,15 +549,15 @@ function create() {
     var clickX = parseInt(game.input.x / monster.tileSize, 10),
         clickY = parseInt(game.input.y / monster.tileSize, 10);
 
-    console.log(clickX, clickY);
-
-    for (var y = 0; y != monster.state.length; y++) {
-      var line = "| ";
-      for (var x = 0; x != monster.state[y].length; x++) {
-        line = line + (typeof(monster.state[y][x]) == 'object' && monster.state[y][x].key || monster.state[y][x]) + " | ";
-      }
-      console.log(line + Math.random());
-    }
+    // console.log(clickX, clickY);
+    //
+    // for (var y = 0; y != monster.state.length; y++) {
+    //   var line = "| ";
+    //   for (var x = 0; x != monster.state[y].length; x++) {
+    //     line = line + (typeof(monster.state[y][x]) == 'object' && monster.state[y][x].key || monster.state[y][x]) + " | ";
+    //   }
+    //   console.log(line + Math.random());
+    // }
 
     switch (monster.clickMode) {
       case 0:
@@ -586,7 +587,7 @@ function create() {
               positionX = clickX - 1,
               positionY = clickY - 4;
 
-          console.log(positionX, positionY);
+          // console.log(positionX, positionY);
 
           for (var x = -1; x <= 1; x++) {
             for (var y = -1; y <= 1; y++) {
