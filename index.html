@@ -362,6 +362,9 @@ function preload() {
   game.load.spritesheet('boat', 'assets/boat.png', 96, 64);
   game.load.spritesheet('mushroom', 'assets/svamp.png', 32, 32);
   game.load.spritesheet('mushroom2', 'assets/svamp2.png', 32, 32);
+  game.load.spritesheet('wave', 'assets/wave.png', 32, 32);
+  game.load.spritesheet('wave2', 'assets/wave2.png', 32, 32);
+  game.load.spritesheet('coinz', 'assets/coinz.png', 32, 32);
   game.load.image('safe_top', 'assets/safe_tile_top.png');
   game.load.image('safe_bottom', 'assets/safe_tile_bottom.png');
   game.load.image('beach', 'assets/beach_tile.png');
@@ -472,6 +475,45 @@ function create() {
       boat.y = boat.y - 10;
       boat.x = boat.x - 6;
 
+      var wave = null;
+      wave = monster.addSprite('wave', 4, 1);
+      wave.animations.add('idle');
+      wave.animations.play('idle', 6, true);
+      wave.x = wave.x - 24;
+      wave.y = wave.y + 24;
+
+      wave = monster.addSprite('wave', 7, 2);
+      wave.animations.add('idle');
+      wave.animations.play('idle', 4, true);
+      wave.y = wave.y - 28;
+      wave.x = wave.x + 16;
+
+      wave = monster.addSprite('wave', 6, 1);
+      wave.animations.add('idle');
+      wave.animations.play('idle', 7, true);
+      wave.scale.setTo(1, 1);
+      wave.y = wave.y + 14;
+      wave.x = wave.x + 16;
+
+      wave = monster.addSprite('wave', 9, 1);
+      wave.animations.add('idle');
+      wave.animations.play('idle', 6, true);
+      // wave.y = wave.y - 10;
+      wave.x = wave.x + 24;
+
+      wave = monster.addSprite('wave2', 5, 2);
+      wave.animations.add('idle');
+      wave.animations.play('idle', 6, true);
+      wave.x = wave.x + 0;
+      wave.y = wave.y - 12;
+
+      wave = monster.addSprite('wave2', 10, 2);
+      wave.animations.add('idle');
+      wave.scale.setTo(1, 1);
+      wave.animations.play('idle', 7, true);
+      wave.x = wave.x + 24;
+      wave.y = wave.y + 20;
+
       var mushroom = null;
 
       mushroom = monster.addSprite('mushroom', 1, 3);
@@ -576,19 +618,27 @@ function create() {
   'Music: "Cartoon menu music" by fearing';
   monster.intro = game.add.bitmapText(70, 70, 'font_orange', intro, 16);
 
-  var sprite = game.add.sprite(13 * monster.tileSize - 24, 2 * monster.tileSize + 20, 'coin');
+  var sprite = game.add.sprite(13 * monster.tileSize - 24, 2 * monster.tileSize + 24, 'coinz');
+  sprite.animations.add('idle')
+  sprite.animations.play('idle', 8, true);
   sprite.scale.setTo(2, 2);
   sprite.smoothed = false;
 
-  monster.coinText = game.add.bitmapText(monster.position(13) + 32, monster.position(2) + (monster.tileSize / 2) - 8 + 20, 'font', ''+monster.coins, 16);
+  monster.coinText = game.add.bitmapText(monster.position(13) + 32, monster.position(2) + (monster.tileSize / 2) - 8 + 24, 'font', ''+monster.coins, 16);
 
-  game.add.sprite(13 * monster.tileSize, 5 * monster.tileSize, 'coin');
+  sprite = game.add.sprite(13 * monster.tileSize, 5 * monster.tileSize, 'coinz');
+  sprite.animations.add('idle')
+  sprite.animations.play('idle', 8, true);
   game.add.bitmapText(monster.position(13) + 32, monster.position(5) + 8, 'font', '1', 16);
 
-  game.add.sprite(13 * monster.tileSize, 7 * monster.tileSize, 'coin');
+  sprite = game.add.sprite(13 * monster.tileSize, 7 * monster.tileSize, 'coinz');
+  sprite.animations.add('idle')
+  sprite.animations.play('idle', 8, true);
   game.add.bitmapText(monster.position(13) + 32, monster.position(7) + 8, 'font', '7', 16);
 
-  game.add.sprite(13 * monster.tileSize, 10 * monster.tileSize + 26, 'coin');
+  sprite = game.add.sprite(13 * monster.tileSize, 10 * monster.tileSize + 26, 'coinz');
+  sprite.animations.add('idle')
+  sprite.animations.play('idle', 8, true);
   game.add.bitmapText(monster.position(13) + 32, monster.position(10) + 34, 'font', '3', 16);
   //sprite.scale.setTo(2, 2);
   sprite.smoothed = false;
