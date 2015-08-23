@@ -142,6 +142,20 @@ var game = new Phaser.Game(1024, 768, Phaser.AUTO, 'game', { preload: preload, c
                           theStalker.yy = theMove.y;
                           theStalker.x = monster.position(theStalker.xx + 1);
                           theStalker.y = monster.position(theStalker.yy + 4);
+
+                          theStalker.hearts[0].x = theStalker.x - 22;
+                          theStalker.hearts[0].y = theStalker.y + 32;
+
+                          if (theStalker.hearts[1]) {
+                            theStalker.hearts[1].x = theStalker.x;
+                            theStalker.hearts[1].y = theStalker.y + 32;
+                          }
+
+                          if (theStalker.hearts[2]) {
+                            theStalker.hearts[2].x = theStalker.x + 22;
+                            theStalker.hearts[2].y = theStalker.y + 32;
+                          }
+
                           monster.state[theMove.y][theMove.x] = theStalker;
                         }
                       }
@@ -171,34 +185,70 @@ var game = new Phaser.Game(1024, 768, Phaser.AUTO, 'game', { preload: preload, c
                     if (key == 'gold_monster') {
                       monster.coins += 5;
                       monster.coinText.text = '' + monster.coins;
-                      monster.state[positionY][positionX].destroy();
-                      monster.state[positionY][positionX] = 0;
+                      // monster.state[positionY][positionX].destroy();
+                      // monster.state[positionY][positionX] = 0;
                       monster.sound.coin.play();
                     } else {
-                      if (key == 'stalker_monster') {
-                        (function () {
-                          var i = -1;
-                          for (var x = 0; x < monster.stalkers.length; x++) {
-                            if (monster.stalkers[x] == monster.state[positionY][positionX]) {
-                              i = x;
+
+                      (function () {
+                        for (var y = 0; y < monster.state.length; y++) {
+                          for (var x = 0; x < monster.state[y].length; x++) {
+                            if (typeof(monster.state[y][x]) === 'object') {
+                              monster.state[y][x].hearts.pop().destroy();
+
+                              if (!monster.state[y][x].hearts.length) {
+                                if (monster.state[y][x].key == 'hole_monster') {
+                                  for (var xx = -1; xx <= 1; xx++) {
+                                    for (var yy = -1; yy <= 1; yy++) {
+                                      if (xx != 0 && yy != 0) {
+                                        monster.state[y + yy][x + xx] = 0;
+                                      }
+                                    }
+                                  }
+                                } else if (monster.state[y][x].key == 'stalker_monster') {
+                                  (function () {
+                                    var i = -1;
+                                    for (var xx = 0; xx < monster.stalkers.length; xx++) {
+                                      if (monster.stalkers[xx] == monster.state[y][x]) {
+                                        i = xx;
+                                      }
+                                    }
+                                    monster.stalkers.splice(i, 1);
+                                  })();
+                                }
+
+                                monster.state[y][x].destroy();
+                                monster.state[y][x] = 0;
+                              }
                             }
                           }
-                          monster.stalkers.splice(i, 1);
-                        })();
-                      }
+                        }
+                      })();
 
-                      monster.state[positionY][positionX].destroy();
-                      monster.state[positionY][positionX] = 0;
+                      // if (key == 'stalker_monster') {
+                      //   (function () {
+                      //     var i = -1;
+                      //     for (var x = 0; x < monster.stalkers.length; x++) {
+                      //       if (monster.stalkers[x] == monster.state[positionY][positionX]) {
+                      //         i = x;
+                      //       }
+                      //     }
+                      //     monster.stalkers.splice(i, 1);
+                      //   })();
+                      // }
+                      //
+                      // monster.state[positionY][positionX].destroy();
+                      // monster.state[positionY][positionX] = 0;
 
-                      if (key == 'hole_monster') {
-                        (function () {
-                          for (var x = -1; x <= 1; x++) {
-                            for (var y = -1; y <= 1; y++) {
-                              monster.state[positionY + y][positionX + x] = 0;
-                            }
-                          }
-                        })();
-                      }
+                      // if (key == 'hole_monster') {
+                      //   (function () {
+                      //     for (var x = -1; x <= 1; x++) {
+                      //       for (var y = -1; y <= 1; y++) {
+                      //         monster.state[positionY + y][positionX + x] = 0;
+                      //       }
+                      //     }
+                      //   })();
+                      // }
 
                       monster.dark.visible = true;
                       game.world.bringToTop(monster.dark);
@@ -250,6 +300,7 @@ function preload() {
   game.load.image('corner', 'assets/corner.png');
   game.load.image('dark', 'assets/dark.png');
   game.load.image('coin', 'assets/coin.png');
+  game.load.image('heart', 'assets/heart.png');
   game.load.bitmapFont('font', 'assets/font/font.png', 'assets/font/font.fnt');
   game.load.bitmapFont('font_orange', 'assets/font_orange/font.png', 'assets/font_orange/font.fnt');
   game.load.bitmapFont('font_pink', 'assets/font_pink/font.png', 'assets/font_pink/font.fnt');
@@ -449,7 +500,6 @@ function create() {
           }
 
           if (free) {
-            monster.state[positionY][positionX] = monster.addSprite('hole_monster', clickX - 1, clickY - 1);
             monster.coins -= 3;
             monster.coinText.text = '' + monster.coins;
             monster.state[positionY - 1][positionX - 1] = 1;
@@ -461,6 +511,37 @@ function create() {
             monster.state[positionY + 1][positionX] = 1;
             monster.state[positionY + 1][positionX + 1] = 1;
             monster.sound.coin.play();
+
+            (function () {
+              var hearts = [],
+                  holeMonster = monster.addSprite('hole_monster', clickX - 1, clickY - 1);
+
+              // goldMonster.animations.add('idle');
+              // goldMonster.animations.play('idle', 15, true);
+              holeMonster.hearts = [];
+              holeMonster.hearts[0] = monster.addSprite('heart', 0, 0);
+              holeMonster.hearts[0].x = holeMonster.x;
+              holeMonster.hearts[0].y = holeMonster.y + 140;
+
+              holeMonster.hearts[1] = monster.addSprite('heart', 0, 0);
+              holeMonster.hearts[1].x = holeMonster.x + 32;
+              holeMonster.hearts[1].y = holeMonster.y + 140;
+
+              holeMonster.hearts[2] = monster.addSprite('heart', 0, 0);
+              holeMonster.hearts[2].x = holeMonster.x + 64;
+              holeMonster.hearts[2].y = holeMonster.y + 140;
+
+              holeMonster.hearts[3] = monster.addSprite('heart', 0, 0);
+              holeMonster.hearts[3].x = holeMonster.x + 96;
+              holeMonster.hearts[3].y = holeMonster.y + 140;
+
+              holeMonster.hearts[4] = monster.addSprite('heart', 0, 0);
+              holeMonster.hearts[4].x = holeMonster.x + 128;
+              holeMonster.hearts[4].y = holeMonster.y + 140;
+
+              monster.state[positionY][positionX] = holeMonster;
+            })();
+
             // monster.clickMode = 0;
             // monster.cursor_hole_monster.x = -1000;
             // monster.cursor_hole_monster.y = -1000;
@@ -481,14 +562,41 @@ function create() {
       var positionX = clickX - 1,
           positionY = clickY - 4;
 
-        if (clickX >= 1 && clickX <= 10 && clickY >= 4 && clickY <= 9 && monster.state[positionY][positionX] == 0 && monster.coins >= 5) {
+        if (clickX >= 1 && clickX <= 10 && clickY >= 4 && clickY <= 9 && monster.state[positionY][positionX] == 0 && monster.coins >= 7) {
             monster.coins -= 7;
             monster.coinText.text = '' + monster.coins;
-            monster.state[positionY][positionX] = monster.addSprite('stalker_monster', clickX, clickY);
-            monster.state[positionY][positionX].xx = positionX;
-            monster.state[positionY][positionX].yy = positionY;
-            monster.state[positionY][positionX].animations.add('idle');
-            monster.state[positionY][positionX].animations.play('idle', 10, true);
+            // monster.state[positionY][positionX] = monster.addSprite('stalker_monster', clickX, clickY);
+            // monster.state[positionY][positionX].xx = positionX;
+            // monster.state[positionY][positionX].yy = positionY;
+            // monster.state[positionY][positionX].animations.add('idle');
+            // monster.state[positionY][positionX].animations.play('idle', 10, true);
+            //
+
+            (function () {
+              var hearts = [],
+                  stalker = monster.addSprite('stalker_monster', clickX, clickY);
+
+              stalker.xx = positionX;
+              stalker.yy = positionY;
+
+              stalker.animations.add('idle');
+              stalker.animations.play('idle', 10, true);
+              stalker.hearts = [];
+              stalker.hearts[0] = monster.addSprite('heart', 0, 0);
+              stalker.hearts[0].x = stalker.x - 22;
+              stalker.hearts[0].y = stalker.y + 32;
+
+              stalker.hearts[1] = monster.addSprite('heart', 0, 0);
+              stalker.hearts[1].x = stalker.x;
+              stalker.hearts[1].y = stalker.y + 32;
+
+              stalker.hearts[2] = monster.addSprite('heart', 0, 0);
+              stalker.hearts[2].x = stalker.x + 22;
+              stalker.hearts[2].y = stalker.y + 32;
+
+              monster.state[positionY][positionX] = stalker;
+            })();
+
             monster.stalkers.push(monster.state[positionY][positionX]);
             monster.sound.coin.play();
             // monster.clickMode = 0;
@@ -511,6 +619,10 @@ function create() {
           for (var y = 0; y < monster.state.length; y++) {
             for (var x = 0; x < monster.state[y].length; x++) {
               if (typeof(monster.state[y][x]) === 'object') {
+                for (var z = 0; z < monster.state[y][x].hearts.length; z++) {
+                  monster.state[y][x].hearts[z].destroy();
+                }
+
                 monster.state[y][x].destroy();
               }
 
@@ -544,9 +656,29 @@ function create() {
           monster.coins -= 1;
           monster.coinText.text = '' + monster.coins;
           monster.sound.coin.play();
-          monster.state[positionY][positionX] = monster.addSprite('gold_monster', clickX, clickY);
-          monster.state[positionY][positionX].animations.add('idle');
-          monster.state[positionY][positionX].animations.play('idle', 15, true);
+
+          (function () {
+            var hearts = [],
+                goldMonster = monster.addSprite('gold_monster', clickX, clickY);
+
+            goldMonster.animations.add('idle');
+            goldMonster.animations.play('idle', 15, true);
+            goldMonster.hearts = [];
+            goldMonster.hearts[0] = monster.addSprite('heart', 0, 0);
+            goldMonster.hearts[0].x = goldMonster.x - 22;
+            goldMonster.hearts[0].y = goldMonster.y + 32;
+
+            goldMonster.hearts[1] = monster.addSprite('heart', 0, 0);
+            goldMonster.hearts[1].x = goldMonster.x;
+            goldMonster.hearts[1].y = goldMonster.y + 32;
+
+            goldMonster.hearts[2] = monster.addSprite('heart', 0, 0);
+            goldMonster.hearts[2].x = goldMonster.x + 22;
+            goldMonster.hearts[2].y = goldMonster.y + 32;
+
+            monster.state[positionY][positionX] = goldMonster;
+          })();
+
         } else if (clickX < 1 || clickX > 10 || clickY < 1 || clickY > 10) {
           monster.clickMode = 0;
           monster.cursor_gold_monster.x = -1000;
