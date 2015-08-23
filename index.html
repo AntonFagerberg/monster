@@ -31,7 +31,7 @@ var game = new Phaser.Game(1024, 768, Phaser.AUTO, '', { preload: preload, creat
       mainTitle: null,
       round: 1,
       highscore: 0,
-      coins: 100,
+      coins: 25,
       stalkers: [],
 
       addSprite: function (name, x, y) {
@@ -332,6 +332,9 @@ function create() {
   game.add.bitmapText(monster.position(13) + 32, monster.position(10) + 50, 'font', '3', 16);
   //sprite.scale.setTo(2, 2);
   sprite.smoothed = false;
+
+  game.add.bitmapText(monster.position(11), (monster.tileSize / 2) - 16, 'font', 'Ludum Dare 33 - 2015', 16);
+  game.add.bitmapText(monster.position(11), monster.position(11) + (monster.tileSize / 2) - 4, 'font', '   Anton Fagerberg\nAlexander Lieszkovszki', 16);
 
   game.input.onDown.add(function () {
     var clickX = parseInt(game.input.x / monster.tileSize, 10),
