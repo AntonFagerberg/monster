@@ -356,6 +356,7 @@ function preload() {
   game.load.spritesheet('stalker_monster_silhouette', 'assets/stalker.png', 32, 32);
   game.load.spritesheet('princess', 'assets/princess.png', 32, 32);
   game.load.spritesheet('prince', 'assets/prince.png', 32, 32);
+  game.load.spritesheet('boat', 'assets/boat.png', 96, 64);
   game.load.image('safe_top', 'assets/safe_tile_top.png');
   game.load.image('safe_bottom', 'assets/safe_tile_bottom.png');
   game.load.image('beach', 'assets/beach_tile.png');
@@ -445,6 +446,12 @@ function create() {
       var hole = monster.addSprite('hole_monster', 12, 8);
       hole.animations.add('idle');
       hole.animations.play('idle', 10, true);
+
+      var boat = monster.addSprite('boat', 1, 1);
+      boat.animations.add('idle');
+      boat.animations.play('idle', 3, true);
+      boat.y = boat.y - 10;
+      boat.x = boat.x - 6;
   })();
 
 
