@@ -37,7 +37,7 @@ var game = new Phaser.Game(1024, 768, Phaser.AUTO, 'game', { preload: preload, c
       mainTitle: null,
       round: 1,
       highscore: 0,
-      coins: 25,
+      coins: 30,
       stalkers: [],
 
       addSprite: function (name, x, y) {
@@ -204,6 +204,7 @@ var game = new Phaser.Game(1024, 768, Phaser.AUTO, 'game', { preload: preload, c
                       game.world.bringToTop(monster.dark);
                       //monster.mainTitle.text = "  The princess won - you lose!";
                       monster.mainTitle.text = "  Victory - the princess is dead!";
+                      monster.sound.win.play();
                       game.world.bringToTop(monster.mainTitle);
                       monster.active = false;
                       monster.clickMode = 4;
@@ -236,8 +237,8 @@ function preload() {
   //game.load.image('gold_monster', 'assets/goldmonster.png');
   game.load.spritesheet('gold_monster', 'assets/goldmonster.png', 32, 32)
   game.load.spritesheet('gold_monster_silhouette', 'assets/goldmonster.png', 32, 32);
-  game.load.image('stalker_monster', 'assets/förföljaren.png');
-  game.load.image('stalker_monster_silhouette', 'assets/förföljaren.png');
+  game.load.spritesheet('stalker_monster', 'assets/stalker.png', 32, 32);
+  game.load.spritesheet('stalker_monster_silhouette', 'assets/stalker.png', 32, 32);
   game.load.image('princess', 'assets/princess.png');
   game.load.image('prince', 'assets/prince.png');
   game.load.image('safe_top', 'assets/safe_tile_top.png');
@@ -260,6 +261,7 @@ function preload() {
   game.load.audio('select', 'assets/select.mp3');
   game.load.audio('dead', 'assets/dead.mp3');
   game.load.audio('music', 'assets/music.mp3');
+  game.load.audio('win', 'assets/win.mp3');
 }
 
 function create() {
@@ -324,7 +326,7 @@ function create() {
   monster.roundTitle = game.add.bitmapText(monster.position(5), monster.position(11) + (monster.tileSize / 2) - 4, 'font', 'Round: 1\nHighscore: ' + monster.highscore, 16);
 
   monster.addSprite('hole_monster', 12, 8);
-  monster.addSprite('stalker_monster', 13, 6);
+
   (function () {
     var gold = monster.addSprite('gold_monster', 13, 4);
     // var frames = [];
@@ -335,6 +337,19 @@ function create() {
     gold.animations.add('idle');
     //idle.play(15, true);
     gold.animations.play('idle', 15, true);
+
+  })();
+
+  (function () {
+    var stalker = monster.addSprite('stalker_monster', 13, 6);
+    // var frames = [];
+    // for (var x = 0; x <= 29; x++) {
+    //   frames.push(x);
+    // }
+
+    stalker.animations.add('idle');
+    //idle.play(15, true);
+    stalker.animations.play('idle', 10, true);
 
   })();
 
@@ -360,7 +375,7 @@ function create() {
   game.add.bitmapText(monster.position(13) + 32, monster.position(5) + 8, 'font', '1', 16);
 
   game.add.sprite(13 * monster.tileSize, 7 * monster.tileSize, 'coin');
-  game.add.bitmapText(monster.position(13) + 32, monster.position(7) + 8, 'font', '5', 16);
+  game.add.bitmapText(monster.position(13) + 32, monster.position(7) + 8, 'font', '7', 16);
 
   game.add.sprite(13 * monster.tileSize, 10 * monster.tileSize + 42, 'coin');
   game.add.bitmapText(monster.position(13) + 32, monster.position(10) + 50, 'font', '3', 16);
@@ -379,6 +394,7 @@ function create() {
   monster.sound.select = game.add.audio('select');
   monster.sound.dead = game.add.audio('dead');
   monster.sound.music = game.add.audio('music');
+  monster.sound.win = game.add.audio('win');
   monster.sound.music.loop = true;
   monster.sound.music.play();
 
@@ -466,11 +482,13 @@ function create() {
           positionY = clickY - 4;
 
         if (clickX >= 1 && clickX <= 10 && clickY >= 4 && clickY <= 9 && monster.state[positionY][positionX] == 0 && monster.coins >= 5) {
-            monster.coins -= 5;
+            monster.coins -= 7;
             monster.coinText.text = '' + monster.coins;
             monster.state[positionY][positionX] = monster.addSprite('stalker_monster', clickX, clickY);
             monster.state[positionY][positionX].xx = positionX;
             monster.state[positionY][positionX].yy = positionY;
+            monster.state[positionY][positionX].animations.add('idle');
+            monster.state[positionY][positionX].animations.play('idle', 10, true);
             monster.stalkers.push(monster.state[positionY][positionX]);
             monster.sound.coin.play();
             // monster.clickMode = 0;
@@ -505,8 +523,8 @@ function create() {
         monster.mainTitle.text = '';
         monster.roundTitle.text = 'Round: 1\nHighscore: ' + monster.highscore;
         monster.dark.visible = false;
-        monster.coins = 25;
-        monster.coinText.text = '25';
+        monster.coins = 30;
+        monster.coinText.text = '30';
         monster.sound.remove.play();
         break;
 
