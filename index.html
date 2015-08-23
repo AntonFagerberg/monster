@@ -85,9 +85,11 @@ var game = new Phaser.Game(1024, 768, Phaser.AUTO, '', { preload: preload, creat
                 monster.mainTitle.text = "  The princess won - you lose!";
                 monster.dark.visible = true;
                 game.world.bringToTop(monster.dark);
-                monster.roundTitle.text = 'Game Over!\nHighscore: ' + monster.highscore;
+                monster.roundTitle.text = 'Game Over!         Highscore: ' + monster.highscore;
                 monster.sound.dead.play();
                 game.world.bringToTop(monster.mainTitle);
+                monster.lose.visible = true;
+                game.world.bringToTop(monster.lose);
                 monster.active = false;
                 monster.round = 1;
                 monster.clickMode = 3;
@@ -312,6 +314,8 @@ var game = new Phaser.Game(1024, 768, Phaser.AUTO, '', { preload: preload, creat
                       monster.mainTitle.text = "  Victory - the princess is dead!";
                       monster.sound.win.play();
                       game.world.bringToTop(monster.mainTitle);
+                      monster.win.visible = true;
+                      game.world.bringToTop(monster.win);
                       monster.active = false;
                       monster.clickMode = 4;
 
@@ -321,7 +325,7 @@ var game = new Phaser.Game(1024, 768, Phaser.AUTO, '', { preload: preload, creat
                       if (monster.round > monster.highscore) {
                         monster.highscore = monster.round;
                       }
-                      monster.roundTitle.text = 'Round: ' + monster.round + '\nHighscore: ' + monster.highscore;
+                      monster.roundTitle.text = 'Round: ' + monster.round + '           Highscore: ' + monster.highscore;
                       monster.round += 1;
                     }
                   }
@@ -349,7 +353,6 @@ function preload() {
   game.load.image('ground_2', 'assets/ground_tile_2.png');
   game.load.spritesheet('hole_monster', 'assets/hålmonster.png', 96, 96);
   game.load.spritesheet('hole_monster_silhouette', 'assets/hålmonster.png', 96, 96);
-  //game.load.image('gold_monster', 'assets/goldmonster.png');
   game.load.spritesheet('gold_monster', 'assets/goldmonster.png', 32, 32)
   game.load.spritesheet('gold_monster_silhouette', 'assets/goldmonster.png', 32, 32);
   game.load.spritesheet('stalker_monster', 'assets/stalker.png', 32, 32);
@@ -357,6 +360,8 @@ function preload() {
   game.load.spritesheet('princess', 'assets/princess.png', 32, 32);
   game.load.spritesheet('prince', 'assets/prince.png', 32, 32);
   game.load.spritesheet('boat', 'assets/boat.png', 96, 64);
+  game.load.spritesheet('mushroom', 'assets/svamp.png', 32, 32);
+  game.load.spritesheet('mushroom2', 'assets/svamp2.png', 32, 32);
   game.load.image('safe_top', 'assets/safe_tile_top.png');
   game.load.image('safe_bottom', 'assets/safe_tile_bottom.png');
   game.load.image('beach', 'assets/beach_tile.png');
@@ -367,6 +372,8 @@ function preload() {
   game.load.image('dark', 'assets/dark.png');
   game.load.image('coin', 'assets/coin.png');
   game.load.image('heart', 'assets/heart.png');
+  game.load.image('lose', 'assets/lose.png');
+  game.load.image('win', 'assets/win.png');
   game.load.bitmapFont('font', 'assets/font/font.png', 'assets/font/font.fnt');
   game.load.bitmapFont('font_orange', 'assets/font_orange/font.png', 'assets/font_orange/font.fnt');
   game.load.bitmapFont('font_pink', 'assets/font_pink/font.png', 'assets/font_pink/font.fnt');
@@ -439,11 +446,23 @@ function create() {
 
   monster.mainTitle = game.add.bitmapText(monster.position(1.55), monster.position(5.3), 'font_lose', '', 22);
 
-  game.add.bitmapText(monster.position(13), monster.position(1) + (monster.tileSize / 2) - 4, 'font', 'Start', 16);
-  monster.roundTitle = game.add.bitmapText(monster.position(5), monster.position(11) + (monster.tileSize / 2) - 4, 'font', 'Round: 1\nHighscore: ' + monster.highscore, 16);
+  game.add.bitmapText(monster.position(13) - 20, monster.position(1) + (monster.tileSize / 2) - 4, 'font_pink', 'Let\'s go!', 16);
+  monster.roundTitle = game.add.bitmapText(monster.position(1), monster.position(11) + (monster.tileSize / 2) - 4, 'font', 'Round: 1           Highscore: ' + monster.highscore, 16);
 
   (function () {
+      monster.lose = monster.addSprite('lose', 1, 2);
+      monster.lose.x = monster.lose.x + 32;
+      monster.lose.scale.setTo(18, 18);
+      monster.lose.visible = false;
+
+
+      monster.win = monster.addSprite('win', 1, 2);
+      monster.win.x = monster.win.x + 32;
+      monster.win.scale.setTo(18, 18);
+      monster.win.visible = false;
+
       var hole = monster.addSprite('hole_monster', 12, 8);
+      hole.y = hole.y - 24;
       hole.animations.add('idle');
       hole.animations.play('idle', 10, true);
 
@@ -452,6 +471,44 @@ function create() {
       boat.animations.play('idle', 3, true);
       boat.y = boat.y - 10;
       boat.x = boat.x - 6;
+
+      var mushroom = null;
+
+      mushroom = monster.addSprite('mushroom', 1, 3);
+      mushroom.scale.setTo(4, 4);
+      mushroom.animations.add('idle');
+      mushroom.y = mushroom.y - 24;
+      mushroom.x = mushroom.x - 24;
+      mushroom.animations.play('idle', 3, true);
+
+      mushroom = monster.addSprite('mushroom', 4, 3);
+      mushroom.animations.add('idle');
+      mushroom.y = mushroom.y - 24;
+      mushroom.animations.play('idle', 1, true);
+
+      mushroom = monster.addSprite('mushroom2', 9, 3);
+      mushroom.scale.setTo(3, 3);
+      mushroom.y = mushroom.y - 12;
+      mushroom.animations.add('idle');
+      mushroom.animations.play('idle', 2, true);
+
+      mushroom = monster.addSprite('mushroom2', 3, 10);
+      mushroom.animations.add('idle');
+      mushroom.y = mushroom.y - 12;
+      mushroom.x = mushroom.x - 24;
+      mushroom.animations.play('idle', 3, true);
+
+      mushroom = monster.addSprite('mushroom', 6, 10);
+      mushroom.scale.setTo(4, 4);
+      mushroom.animations.add('idle');
+      mushroom.y = mushroom.y - 24;
+      mushroom.animations.play('idle', 1, true);
+
+      mushroom = monster.addSprite('mushroom', 8, 10);
+      mushroom.scale.setTo(3, 3);
+      mushroom.y = mushroom.y - 36;
+      mushroom.animations.add('idle');
+      mushroom.animations.play('idle', 2, true);
   })();
 
 
@@ -519,11 +576,11 @@ function create() {
   'Music: "Cartoon menu music" by fearing';
   monster.intro = game.add.bitmapText(70, 70, 'font_orange', intro, 16);
 
-  var sprite = game.add.sprite(13 * monster.tileSize - 24, 2 * monster.tileSize, 'coin');
+  var sprite = game.add.sprite(13 * monster.tileSize - 24, 2 * monster.tileSize + 20, 'coin');
   sprite.scale.setTo(2, 2);
   sprite.smoothed = false;
 
-  monster.coinText = game.add.bitmapText(monster.position(13) + 32, monster.position(2) + (monster.tileSize / 2) - 8, 'font', ''+monster.coins, 16);
+  monster.coinText = game.add.bitmapText(monster.position(13) + 32, monster.position(2) + (monster.tileSize / 2) - 8 + 20, 'font', ''+monster.coins, 16);
 
   game.add.sprite(13 * monster.tileSize, 5 * monster.tileSize, 'coin');
   game.add.bitmapText(monster.position(13) + 32, monster.position(5) + 8, 'font', '1', 16);
@@ -531,8 +588,8 @@ function create() {
   game.add.sprite(13 * monster.tileSize, 7 * monster.tileSize, 'coin');
   game.add.bitmapText(monster.position(13) + 32, monster.position(7) + 8, 'font', '7', 16);
 
-  game.add.sprite(13 * monster.tileSize, 10 * monster.tileSize + 42, 'coin');
-  game.add.bitmapText(monster.position(13) + 32, monster.position(10) + 50, 'font', '3', 16);
+  game.add.sprite(13 * monster.tileSize, 10 * monster.tileSize + 26, 'coin');
+  game.add.bitmapText(monster.position(13) + 32, monster.position(10) + 34, 'font', '3', 16);
   //sprite.scale.setTo(2, 2);
   sprite.smoothed = false;
 
@@ -568,11 +625,11 @@ function create() {
 
     switch (monster.clickMode) {
       case 0:
-        if (clickX == 13 && clickY == 1 && !monster.active) { // Start game
+        if (clickX >= 12 && clickX <= 14 && clickY == 1 && !monster.active) { // Start game
           monster.active = true;
           monster.princess.start();
           monster.sound.select.play();
-          monster.roundTitle.text = 'Round: ' + monster.round + '\nHighscore: ' + monster.highscore;
+          monster.roundTitle.text = 'Round: ' + monster.round + '           Highscore: ' + monster.highscore;
         } else if (clickX == 13 && clickY == 6 && !monster.active  && monster.coins >= 7) { // Stalker
           monster.clickMode = 2;
           monster.sound.select.play();
@@ -740,7 +797,8 @@ function create() {
         monster.princess.clear();
         monster.clickMode = 0;
         monster.mainTitle.text = '';
-        monster.roundTitle.text = 'Round: 1\nHighscore: ' + monster.highscore;
+        monster.roundTitle.text = 'Round: 1           Highscore: ' + monster.highscore;
+        monster.lose.visible = false;
         monster.dark.visible = false;
         monster.coins = 30;
         monster.coinText.text = '30';
@@ -754,6 +812,7 @@ function create() {
         monster.mainTitle.text = '';
         monster.dark.visible = false;
         monster.sound.remove.play();
+        monster.win.visible = false;
         break;
 
       case 5:
